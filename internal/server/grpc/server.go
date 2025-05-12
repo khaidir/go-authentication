@@ -15,7 +15,7 @@ import (
 )
 
 func StartGRPCServer() error {
-	lis, err := net.Listen("tcp", ":"+os.Getenv("PORT"))
+	lis, err := net.Listen("tcp", ":"+os.Getenv("PORT_GRPC"))
 	if err != nil {
 		return err
 	}
@@ -28,6 +28,6 @@ func StartGRPCServer() error {
 	s := grpc.NewServer()
 	authpb.RegisterAuthServiceServer(s, handler)
 
-	log.Println("[gRPC] AuthService listening on :" + os.Getenv("PORT"))
+	log.Println("[gRPC] AuthService listening on :" + os.Getenv("PORT_GRPC"))
 	return s.Serve(lis)
 }

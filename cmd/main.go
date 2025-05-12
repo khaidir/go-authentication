@@ -7,6 +7,9 @@ import (
 	"auth-services/config"
 	"auth-services/internal/http/routes"
 	"auth-services/internal/server/grpc"
+	"auth-services/pkg/logger"
+	"auth-services/pkg/middleware"
+	"auth-services/pkg/observability"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -14,16 +17,27 @@ import (
 )
 
 func main() {
-	config.InitDB()
-	config.InitRedis()
+	config.DB = config.InitDB()
+	config.Redis = config.InitRedis()
+
+	if os.Getenv("APP_ENV") == "local" {
+		observability.InitTracerLocal()
+	} else {
+		observability.InitTracerOTLP("auth-service")
+	}
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
+	// r := gin.New()
+	r.Use(logger.TraceMiddleware())
 	r.Use(gzip.Gzip(gzip.BestCompression))
-	r.Use(otelgin.Middleware("user-service"))
+	r.Use(otelgin.Middleware("auth-service"))
+	r.Use(middleware.RequestContextMiddleware())
+	// r.Use(logger.GinLoggerMiddleware())
 
 	routes.InitRoutes(r)
 
+	// r.Use(gin.Recovery())
 	r.Run(":" + os.Getenv("PORT"))
 
 	log.Println("Starting gRPC Auth Service...")

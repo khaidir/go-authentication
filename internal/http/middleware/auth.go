@@ -29,7 +29,6 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token", "details": err.Error()})
 			return
 		}
-
 		c.Next()
 	}
 }

@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	"auth-services/config"
@@ -51,13 +52,14 @@ func (u *userUsecase) Login(req dto.LoginRequest) (string, error) {
 
 func (u *userUsecase) GetProfile(id uint) (*dto.UserResponse, error) {
 	ctx := context.Background()
-	cacheKey := "user_profile:" + string(rune(id))
+	cacheKey := "user_profile:" + strconv.FormatUint(uint64(id), 10)
 
 	val, err := config.Redis.Get(ctx, cacheKey).Result()
 	if err == nil {
 		var user dto.UserResponse
-		json.Unmarshal([]byte(val), &user)
-		return &user, nil
+		if err := json.Unmarshal([]byte(val), &user); err == nil {
+			return &user, nil
+		}
 	}
 
 	user, err := u.repo.GetByID(id)

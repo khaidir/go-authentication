@@ -27,6 +27,10 @@ func InitDB() *gorm.DB {
 	if err != nil {
 		panic("failed to connect database: " + err.Error())
 	}
+
+	if db == nil {
+		return nil
+	}
 	return db
 }
 
