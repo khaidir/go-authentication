@@ -1,0 +1,57 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go CI (Alpine Optimized)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    container:
+      image: golang:1.20-alpine
+    steps:
+      - name: Install dependencies
+        run: |
+          apk add --no-cache git bash
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set Go cache
+        uses: actions/cache@v3
+        with:
+          path: /go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Verify Go version
+        run: go version
+
+      - name: Tidy modules
+        run: go mod tidy
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build the project
+        run: go build -v ./...
+
+      - name: Run unit tests
+        run: go test -v ./...
+
+      # Optional: Linting
+      - name: Run Linter (optional)
+        if: always()
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          golangci-lint run
+
+      # Optional: Generate coverage report
+      - name: Test Coverage (optional)
+        run: go test -coverprofile=coverage.out ./...
