@@ -1,12 +1,13 @@
-package logger
+package middleware
 
 import (
-	"auth-services/pkg/middleware"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
+
+var Log *zap.Logger
 
 func GinLoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -14,8 +15,8 @@ func GinLoggerMiddleware() gin.HandlerFunc {
 		c.Next()
 		duration := time.Since(start)
 
-		reqID, _ := c.Get(middleware.RequestIDKey)
-		traceID, _ := c.Get(middleware.TraceIDKey)
+		reqID, _ := c.Get(RequestIDKey)
+		traceID, _ := c.Get(TraceIDKey)
 
 		if Log != nil {
 			Log.Info("HTTP Request",
