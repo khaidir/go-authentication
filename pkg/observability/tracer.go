@@ -12,7 +12,7 @@ import (
 )
 
 func InitTracerLocal() {
-	file, err := os.Create("otel-local-traces.json")
+	file, err := os.Create("storage/logs/otel-local.json")
 	if err != nil {
 		log.Fatalf("failed to create trace output file: %v", err)
 	}
@@ -23,7 +23,7 @@ func InitTracerLocal() {
 	}
 	bsp := trace.NewSimpleSpanProcessor(exporter)
 	tp := trace.NewTracerProvider(
-		trace.WithSampler(trace.TraceIDRatioBased(0.5)), // 5% sampling
+		trace.WithSampler(trace.TraceIDRatioBased(2.5)), // 25% sampling
 		trace.WithSpanProcessor(bsp),
 		trace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
