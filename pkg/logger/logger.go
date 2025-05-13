@@ -12,7 +12,7 @@ var Log *zap.Logger
 
 const TraceIDKey = "trace_id"
 
-func Init() {
+func InitLogger() {
 	var err error
 	Log, err = zap.NewProduction()
 	if err != nil {

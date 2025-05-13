@@ -19,6 +19,7 @@ import (
 func main() {
 	config.DB = config.InitDB()
 	config.Redis = config.InitRedis()
+	// logger.InitLogger()
 
 	if os.Getenv("APP_ENV") == "local" {
 		observability.InitTracerLocal()

@@ -7,7 +7,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// var secret = []byte("your-secret-key")
 var jwtKey = []byte("your-secret")
 
 func GenerateJWT(userID uint) (string, error) {

@@ -16,7 +16,7 @@ func InitTracerLocal() {
 	if err != nil {
 		log.Fatalf("failed to create trace output file: %v", err)
 	}
-	// exporter, err := stdouttrace.New(stdouttrace.WithWriter(os.Stdout), stdouttrace.WithPrettyPrint())
+
 	exporter, _ := stdouttrace.New(stdouttrace.WithWriter(file))
 	if err != nil {
 		log.Fatalf("failed to initialize stdout exporter: %v", err)
