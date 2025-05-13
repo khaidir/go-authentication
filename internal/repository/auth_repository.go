@@ -10,9 +10,9 @@ import (
 type UserRepository interface {
 	Create(user *entity.User) error
 	GetByEmail(email string) (*entity.User, error)
-	GetByID(id uint) (*entity.User, error)
+	GetByID(id string) (*entity.User, error)
 	Update(user *entity.User) error
-	Delete(id uint) error
+	Delete(id string) error
 }
 
 type userRepo struct {
@@ -33,9 +33,9 @@ func (r *userRepo) GetByEmail(email string) (*entity.User, error) {
 	return &user, err
 }
 
-func (r *userRepo) GetByID(id uint) (*entity.User, error) {
+func (r *userRepo) GetByID(id string) (*entity.User, error) {
 	var user entity.User
-	err := r.db.First(&user, id).Error
+	err := r.db.Where("id = ?", id).First(&user).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, entity.ErrUserNotFound
@@ -44,13 +44,13 @@ func (r *userRepo) GetByID(id uint) (*entity.User, error) {
 		return nil, err
 	}
 
-	return &user, err
+	return &user, nil
 }
 
 func (r *userRepo) Update(user *entity.User) error {
 	return r.db.Save(user).Error
 }
 
-func (r *userRepo) Delete(id uint) error {
+func (r *userRepo) Delete(id string) error {
 	return r.db.Delete(&entity.User{}, id).Error
 }

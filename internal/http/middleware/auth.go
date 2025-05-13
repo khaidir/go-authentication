@@ -39,8 +39,8 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 
 		// Ambil dan validasi claims
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			if idFloat, ok := claims["id"].(float64); ok {
-				c.Set("userID", uint(idFloat))
+			if id, ok := claims["id"].(string); ok {
+				c.Set("userID", id)
 			} else {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})
 				return

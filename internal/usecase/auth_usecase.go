@@ -3,8 +3,6 @@ package usecase
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strconv"
 	"time"
 
 	"auth-services/config"
@@ -15,13 +13,14 @@ import (
 
 	"encoding/json"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserUsecase interface {
 	Register(dto.RegisterRequest) error
-	Login(dto.LoginRequest) (string, error)
-	GetProfile(uint) (*dto.UserResponse, error)
+	Login(dto.LoginRequest) (*dto.LoginResponse, error)
+	GetProfile(string) (*dto.UserResponse, error)
 	VerifyToken(context.Context, string) (string, error)
 }
 
@@ -36,24 +35,36 @@ func NewUserUsecase(r repository.UserRepository) UserUsecase {
 func (u *userUsecase) Register(req dto.RegisterRequest) error {
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	user := &entity.User{
+		ID:       uuid.NewString(),
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: string(hashed),
+		Role:     req.Role,
 	}
 	return u.repo.Create(user)
 }
 
-func (u *userUsecase) Login(req dto.LoginRequest) (string, error) {
+func (u *userUsecase) Login(req dto.LoginRequest) (*dto.LoginResponse, error) {
 	user, err := u.repo.GetByEmail(req.Email)
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)) != nil {
-		return "", errors.New("invalid credentials")
+		return nil, errors.New("invalid credentials")
 	}
-	return utils.GenerateJWT(user.ID)
+	// return utils.GenerateJWT(user.ID)
+	token, err := utils.GenerateJWT(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.LoginResponse{
+		ID:    user.ID,
+		Email: user.Email,
+		Token: token,
+	}, nil
 }
 
-func (u *userUsecase) GetProfile(id uint) (*dto.UserResponse, error) {
+func (u *userUsecase) GetProfile(id string) (*dto.UserResponse, error) {
 	ctx := context.Background()
-	cacheKey := "user_profile:" + strconv.FormatUint(uint64(id), 10)
+	cacheKey := "user_profile:" + id
 
 	val, err := config.Redis.Get(ctx, cacheKey).Result()
 	if err == nil {
@@ -88,9 +99,9 @@ func (u *userUsecase) VerifyToken(ctx context.Context, token string) (string, er
 	if err != nil {
 		return "", err
 	}
-	id, ok := claims["id"].(float64)
+	id, ok := claims["id"].(string)
 	if !ok {
 		return "", errors.New("invalid token id")
 	}
-	return fmt.Sprintf("%.0f", id), nil
+	return id, nil
 }

@@ -9,7 +9,7 @@ import (
 
 var secretKey = []byte("ABCABSCK&Y&(&*GBLHG*^GGYBHG^)")
 
-func GenerateJWT(userID uint) (string, error) {
+func GenerateJWT(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"id":  userID,
 		"exp": time.Now().Add(24 * time.Hour).Unix(),

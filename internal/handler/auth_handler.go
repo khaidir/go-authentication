@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strconv"
 
 	"auth-services/internal/dto"
 	"auth-services/internal/usecase"
@@ -36,6 +35,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	res := dto.RegisterResponse{
 		Name:  req.Name,
 		Email: req.Email,
+		Role:  req.Role,
 	}
 	utils.Response(c, http.StatusOK, "Successfully registered user", res)
 }
@@ -52,29 +52,34 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.Uc.Login(req)
+	resp, err := h.Uc.Login(req)
 	if err != nil {
 		utils.ResponseError(c, http.StatusUnauthorized, "Invalid credentials", err.Error())
 		return
 	}
-	logged := gin.H{
-		"email": req.Email,
-		"token": token,
-	}
-	utils.Response(c, http.StatusOK, "Logged", logged)
+	utils.Response(c, http.StatusOK, "Logged", resp)
 }
 
 func (h *UserHandler) Profile(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id == 0 {
-		logger.LogWithTrace(c, "Parameter not consistent", err, "warn")
+	id := c.Param("id")
+	if id == "" {
+		logger.LogWithTrace(c, "Parameter not consistent", nil, "warn")
 		utils.ResponseParameterErrors(c, []utils.FieldError{
 			{Field: "id", Message: "Id is required"},
 		})
 		return
 	}
 
-	res, err := h.Uc.GetProfile(uint(id))
+	// Validate UUID format if needed
+	if !utils.IsValidUUID(id) {
+		logger.LogWithTrace(c, "Invalid UUID format", nil, "warn")
+		utils.ResponseParameterErrors(c, []utils.FieldError{
+			{Field: "id", Message: "Invalid UUID format"},
+		})
+		return
+	}
+
+	res, err := h.Uc.GetProfile(id)
 	if err != nil {
 		logger.LogWithTrace(c, "Failed to get user profile", err, "warn")
 		utils.ResponseError(c, http.StatusNotFound, "Not Found", err.Error())
