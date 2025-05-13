@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("your-secret")
+var secretKey = []byte("ABCABSCK&Y&(&*GBLHG*^GGYBHG^)")
 
 func GenerateJWT(userID uint) (string, error) {
 	claims := jwt.MapClaims{
@@ -15,7 +15,7 @@ func GenerateJWT(userID uint) (string, error) {
 		"exp": time.Now().Add(24 * time.Hour).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
+	return token.SignedString(secretKey)
 }
 
 type Claims struct {
@@ -23,16 +23,23 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func ValidateJWT(tokenStr string) (*Claims, error) {
-	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
+func ValidateJWT(tokenStr string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		return secretKey, nil
 	})
 	if err != nil || !token.Valid {
 		return nil, errors.New("invalid token")
 	}
-	if claims.ExpiresAt.Time.Before(time.Now()) {
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("invalid token claims")
+	}
+
+	exp, ok := claims["exp"].(float64)
+	if !ok || time.Unix(int64(exp), 0).Before(time.Now()) {
 		return nil, errors.New("token expired")
 	}
+
 	return claims, nil
 }

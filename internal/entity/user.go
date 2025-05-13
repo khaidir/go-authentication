@@ -1,6 +1,11 @@
 package entity
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var ErrUserNotFound = errors.New("user not found")
 
 type User struct {
 	ID        uint   `gorm:"primaryKey"`

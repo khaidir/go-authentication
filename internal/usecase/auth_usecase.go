@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -64,6 +65,9 @@ func (u *userUsecase) GetProfile(id uint) (*dto.UserResponse, error) {
 
 	user, err := u.repo.GetByID(id)
 	if err != nil {
+		if errors.Is(err, entity.ErrUserNotFound) {
+			return nil, err
+		}
 		return nil, err
 	}
 
@@ -84,5 +88,9 @@ func (u *userUsecase) VerifyToken(ctx context.Context, token string) (string, er
 	if err != nil {
 		return "", err
 	}
-	return claims.UserID, nil
+	id, ok := claims["id"].(float64)
+	if !ok {
+		return "", errors.New("invalid token id")
+	}
+	return fmt.Sprintf("%.0f", id), nil
 }

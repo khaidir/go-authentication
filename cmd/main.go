@@ -17,26 +17,39 @@ import (
 )
 
 func main() {
+
+	name := os.Getenv("SERVICE_NAME")
+
 	config.DB = config.InitDB()
 	config.Redis = config.InitRedis()
+	logger.InitLogger()
 
 	gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
 	r.Use(logger.TraceMiddleware())
-	r.Use(gzip.Gzip(gzip.BestCompression))
 	r.Use(middleware.RequestContextMiddleware())
-	r.Use(otelgin.Middleware("auth-service"))
+	r.Use(gzip.Gzip(gzip.BestCompression))
+	r.Use(otelgin.Middleware(name))
 	r.Use(middleware.GinLoggerMiddleware())
 
 	if os.Getenv("APP_ENV") == "local" {
 		observability.InitTracerLocal()
 	} else {
-		observability.InitTracerOTLP("auth-service")
+		observability.InitTracerOTLP(name)
 	}
 
 	routes.InitRoutes(r)
-	r.Run(":" + os.Getenv("PORT"))
 
+	// Jalankan HTTP server dalam goroutine
+	go func() {
+		log.Println("Starting HTTP server on port " + os.Getenv("PORT"))
+		if err := r.Run(":" + os.Getenv("PORT")); err != nil {
+			log.Fatalf("failed to start HTTP server: %v", err)
+		}
+	}()
+
+	// Jalankan gRPC server di thread utama
 	log.Println("Starting gRPC Auth Service...")
 	if err := grpc.StartGRPCServer(); err != nil {
 		log.Fatalf("failed to start gRPC server: %v", err)

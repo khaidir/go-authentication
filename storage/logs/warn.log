@@ -1,0 +1,4 @@
+{"level":"warn","ts":1747116470.673721,"caller":"logger/logger.go:77","msg":"Parameter not consistent","error":"strconv.Atoi: parsing \":id\": invalid syntax","trace_id":"3ce5ca0e-4b93-4022-9f91-6cc5b22e4f5c"}
+{"level":"warn","ts":1747116622.1983,"caller":"logger/logger.go:69","msg":"Parameter not consistent","error":"strconv.Atoi: parsing \":id\": invalid syntax","trace_id":"dcf1876b-7613-4247-84e0-a8a27c624f0b"}
+{"level":"warn","ts":1747116632.3287182,"caller":"logger/logger.go:69","msg":"Parameter not consistent","error":"strconv.Atoi: parsing \":id\": invalid syntax","trace_id":"8e2a97a1-21dd-4f79-b2de-deeee1322962"}
+{"level":"warn","ts":1747116637.889237,"caller":"logger/logger.go:69","msg":"Parameter not consistent","error":"strconv.Atoi: parsing \":id\": invalid syntax","trace_id":"1814e586-de0f-4602-8dc9-d88bab615a20"}

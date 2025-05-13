@@ -2,6 +2,7 @@ package repository
 
 import (
 	"auth-services/internal/entity"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -35,6 +36,14 @@ func (r *userRepo) GetByEmail(email string) (*entity.User, error) {
 func (r *userRepo) GetByID(id uint) (*entity.User, error) {
 	var user entity.User
 	err := r.db.First(&user, id).Error
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, entity.ErrUserNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	return &user, err
 }
 

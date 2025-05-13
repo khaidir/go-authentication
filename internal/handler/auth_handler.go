@@ -6,6 +6,7 @@ import (
 
 	"auth-services/internal/dto"
 	"auth-services/internal/usecase"
+	"auth-services/pkg/logger"
 	"auth-services/pkg/utils"
 
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,12 @@ func (h *UserHandler) Register(c *gin.Context) {
 		utils.Response(c, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
+
+	if err := utils.ValidateStruct(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": err.Error()})
+		return
+	}
+
 	err := h.Uc.Register(req)
 	if err != nil {
 		utils.Response(c, http.StatusInternalServerError, err.Error(), nil)
@@ -37,14 +44,17 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.LogError(c, http.StatusBadRequest, "Internal Server Error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.ResponseValidationError(c, err)
 		return
 	}
+	if err := utils.ValidateStruct(&req); err != nil {
+		utils.ResponseValidationFailed(c, utils.FormatValidationErrors(err))
+		return
+	}
+
 	token, err := h.Uc.Login(req)
 	if err != nil {
-		utils.LogError(c, http.StatusInternalServerError, "Internal Server Error", err)
-		utils.Response(c, http.StatusInternalServerError, "Internal server error", err.Error())
+		utils.ResponseError(c, http.StatusUnauthorized, "Invalid credentials", err.Error())
 		return
 	}
 	logged := gin.H{
@@ -55,11 +65,19 @@ func (h *UserHandler) Login(c *gin.Context) {
 }
 
 func (h *UserHandler) Profile(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil || id == 0 {
+		logger.LogWithTrace(c, "Parameter not consistent", err, "warn")
+		utils.ResponseParameterErrors(c, []utils.FieldError{
+			{Field: "id", Message: "Id is required"},
+		})
+		return
+	}
+
 	res, err := h.Uc.GetProfile(uint(id))
 	if err != nil {
-		utils.LogError(c, 500, "failed to get profile", err)
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		logger.LogWithTrace(c, "Failed to get user profile", err, "warn")
+		utils.ResponseError(c, http.StatusNotFound, "Not Found", err.Error())
 		return
 	}
 	utils.Response(c, http.StatusOK, "OK", res)
